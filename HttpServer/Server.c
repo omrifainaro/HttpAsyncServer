@@ -1,6 +1,6 @@
 #include "Server.h"
 
-error_t initServer(server_t* server, PCHAR ip, USHORT port) {
+error_t initServer(server_t* server, PCHAR ip, USHORT port, char* rootPath) {
 	error_t err = ERROR_UNINIT;
 	int iResult = 0;
 	WSADATA wsaData = { 0 };
@@ -29,6 +29,8 @@ error_t initServer(server_t* server, PCHAR ip, USHORT port) {
 		err = ERROR_INIT_FAILURE;
 		goto fail;
 	}
+
+	initFileHandler(rootPath);
 
 	err = ERROR_OK;
 	return err;
@@ -60,6 +62,111 @@ static void printStringByLength(char* str, int len) {
 	printf("\n");
 }
 
+static error_t recvFromClientSocket(client_t* client) {
+	error_t err = ERROR_UNINIT;
+	ULONG bytes = -1;
+	int iResult = 0;
+	BYTE* data = NULL;
+
+	iResult = ioctlsocket(client->sock, FIONREAD, &bytes);
+	if (iResult) {
+		printf("ioctlsocket failed with error: %ld\n", iResult);
+		return ERROR_SOCKET;
+	}
+
+	printf("Client sent %ld bytes\n", bytes);
+	data = malloc(bytes);
+	iResult = recv(client->sock, data, bytes, 0);
+	if (bytes != iResult) {
+		err = ERROR_SOCKET;
+		goto cleanup;
+	}
+
+	err = writeBuffer(&client->buffer, data, iResult);
+
+cleanup:
+	if (data)
+		free(data);
+	return err;
+}
+
+static error_t checkFullData(client_t* client) {
+	error_t err = ERROR_UNINIT;
+	BYTE* ptr = NULL;
+	BYTE* buffer = GET_BUF_PTR(client->buffer);
+	BYTE* value = NULL;
+
+	ptr = memnmem(buffer, client->buffer.size, HTTP_BODY_DELIM, sizeof(HTTP_BODY_DELIM) - 1);
+	if (!ptr) {
+		return ERROR_MORE_READ;
+	}
+
+	err = getHeaderValue(buffer, client->buffer.size, "Content-Length", &value);
+	if (err == ERROR_NO_FOUND) {
+		return ERROR_OK;
+	}
+
+	// If data up until \r\n\r\n
+	if (client->buffer.size - ((ptr + (sizeof(HTTP_BODY_DELIM) - 1)) - buffer) >= atoi(value)) {
+		return ERROR_OK;
+	}
+		
+	return ERROR_MORE_READ;
+}
+
+static error_t handleRequest(client_t* client, HTTP_REQUEST_PACKET* request) {
+	error_t err = ERROR_UNINIT;
+	BYTE* fileContent = NULL;
+	char contentLength[10];
+	char* response = NULL;
+	EXIT_CODE code = SUCCESS;
+	SIZE_T fileSize = 0;
+	HEADER h1 = { "Connection", "Keep-Alive" };
+	HEADER h2 = { "Keep-Alive", "timeout=5, max=999" };
+	HEADER h3 = { "Content-Length", "9" };
+	HEADER* headers[] = { &h1, &h2, &h3 };
+	HTTP_RESPONSE_PACKET packet = { "HTTP/1.1", "200", "OK", headers, NULL, sizeof(headers) / sizeof(HEADER*) };
+	char* path = request->request_target_path;
+
+	if (!getFileContent(path, &fileContent, &fileSize)) {
+		return ERROR_NO_FOUND;
+	}
+
+	snprintf(contentLength, 10, "%d", fileSize);
+	h3.value = contentLength;
+	packet.body = fileContent;
+
+	code = create_http_response_packet(&packet, &response);
+	if (code == SUCCESS) {
+		send(client->sock, response, strlen(response), 0);
+	}
+	
+	return ERROR_OK;
+}
+
+/// <summary>
+/// This function gets called when there is data on the socket
+/// </summary>
+/// <param name="client">contains a socket and a buffer to read data to</param>
+/// <returns>error code</returns>
+static error_t handleClient(client_t* client) {
+	HTTP_REQUEST_PACKET* request = NULL;
+	EXIT_CODE exitCode = SUCCESS;
+	error_t err = recvFromClientSocket(client);
+	char* buffer = (char*) GET_BUF_PTR(client->buffer);
+
+	if (!IS_SUCCESS(err)) {
+		return err;
+	}
+
+	err = checkFullData(client);
+	if (IS_SUCCESS(err)) {
+		exitCode = parse_http_request_packet(buffer, client->buffer.size, &request);
+		err = handleRequest(client, request);
+	}
+	return err;
+}
+
 static error_t serverLoop(server_t* server) {
 	error_t err = ERROR_UNINIT;
 	int i = 0;
@@ -67,6 +174,7 @@ static error_t serverLoop(server_t* server) {
 	fd_set readfds = { 0 };
 	struct timeval tv = { 100, 0 };
 	client_t* currentClient = NULL;
+	client_t* clientOp = NULL;
 
 	while (1) {
 		FD_ZERO(&readfds);
@@ -80,7 +188,7 @@ static error_t serverLoop(server_t* server) {
 		iResult = select(0, &readfds, NULL, NULL, &tv);
 		if (iResult == SOCKET_ERROR) {
 			printf("Socket error: %lu", GetLastError());
-			//TODO: Think what to do here
+			exit(0);
 		}
 		
 		// We are accepting a client
@@ -89,20 +197,25 @@ static error_t serverLoop(server_t* server) {
 			if (IS_SUCCESS(err)) {
 				currentClient->sock = accept(server->acceptSocket, &currentClient->addr, NULL);
 				if (currentClient->sock == INVALID_SOCKET) {
-					// TODO: Think what to do here
+					exit(0);
 				}
+				initBuffer(&currentClient->buffer);
 				currentClient->alive = 1;
 				printf("New client connected!\n");
 			}
 		}
 
 		for (i = 0; i < FD_SETSIZE; i++) {
-			if (server->socketArray[i].alive) {
-				if (FD_ISSET(server->socketArray[i].sock, &readfds)) {
-					iResult = recv(server->socketArray[i].sock, server->socketArray[i].recvBuffer, BUFFER_LEN, 0);
-					printf("Received %d bytes\n", iResult);
-					printStringByLength(server->socketArray[i].recvBuffer, iResult);
+			clientOp = &server->socketArray[i];
+			if (clientOp->alive) {
+				if (FD_ISSET(clientOp->sock, &readfds)) {
+					err = handleClient(clientOp);
+					if (!IS_SUCCESS(err)) {
+						closesocket(clientOp->sock);
+						clientOp->alive = 0;
+					}
 				}
+				FD_CLR(clientOp->sock, &readfds);
 			}
 		}
 	}
@@ -161,5 +274,6 @@ void cleanupServer(server_t* server) {
 			closesocket(server->acceptSocket);
 		if (server->ip)
 			free(server->ip);
+		WSACleanup();
 	}
 }

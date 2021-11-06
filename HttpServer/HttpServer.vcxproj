@@ -139,14 +139,22 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Buffer.c" />
+    <ClCompile Include="FileHandler.c" />
     <ClCompile Include="Http.c" />
+    <ClCompile Include="http_parser.c" />
     <ClCompile Include="Main.c" />
     <ClCompile Include="Server.c" />
+    <ClCompile Include="Utils.c" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Buffer.h" />
     <ClInclude Include="Error.h" />
+    <ClInclude Include="FileHandler.h" />
     <ClInclude Include="Http.h" />
+    <ClInclude Include="http_parser.h" />
     <ClInclude Include="Server.h" />
+    <ClInclude Include="Utils.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
