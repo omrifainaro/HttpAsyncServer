@@ -16,7 +16,7 @@ error_t initBuffer(buffer_t* buf) {
 /// <returns></returns>
 error_t writeBuffer(buffer_t* buf, BYTE* data, SIZE_T dataLen) {
 	BYTE* dataCopy = NULL;
-	BYTE* baseBufferPtr = GET_BUF_PTR((*buf));
+	BYTE* baseBufferPtr = GET_BUF_PTR(buf);
 
 	if (buf->capacity == BUFF_SIZE && buf->size + dataLen > BUFF_SIZE) {
 		dataCopy = malloc(buf->capacity + dataLen + BUFF_EXTRA);
@@ -37,4 +37,15 @@ error_t writeBuffer(buffer_t* buf, BYTE* data, SIZE_T dataLen) {
 	buf->size += dataLen;
 	buf->end += dataLen;
 	return ERROR_OK;
+}
+
+void cleanupBuffer(buffer_t* buffer) {
+	if (buffer) {
+		if (!IS_SMALL_BUFFER(buffer)) {
+			free(buffer->b.largeBuf);
+			buffer->b.largeBuf = NULL;
+		}
+		buffer->end = NULL;
+		buffer->size = 0;
+	}
 }

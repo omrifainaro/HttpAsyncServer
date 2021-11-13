@@ -59,7 +59,6 @@ static BYTE* iterateHeaders(BYTE* base, BYTE** iterator, SIZE_T size, header_t* 
 	return (found) ? cur : NULL;
 }
 
-
 error_t getHeaderValue(BYTE* buffer, SIZE_T size, PCHAR header, PCHAR** outValue) {
 	BYTE* iterator = buffer;
 	BYTE* curHeader = NULL;

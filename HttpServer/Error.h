@@ -16,7 +16,7 @@ typedef enum _EXIT_CODE
 {
 	SUCCESS,
 	FAILED,
-	BAD_REQUEST
+	KAK_REQUEST
 } EXIT_CODE;
 
 #define IS_SUCCESS(err) (err == ERROR_OK) 

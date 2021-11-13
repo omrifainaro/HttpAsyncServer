@@ -16,7 +16,7 @@ BYTE* memnmem(BYTE* buffer, SIZE_T bufLen, BYTE* search, SIZE_T searchLen) {
 
 EXIT_CODE copy_to_heap(char** dest, char* src, int dest_size)
 {
-	if (dest_size <= 0) return BAD_REQUEST;
+	if (dest_size <= 0) return KAK_REQUEST;
 	*dest = (char*)malloc(dest_size);
 	if (!*dest) return FAILED;
 	strncpy(*dest, src, dest_size);

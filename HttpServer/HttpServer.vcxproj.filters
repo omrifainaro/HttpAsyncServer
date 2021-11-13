@@ -36,6 +36,9 @@
     <ClCompile Include="FileHandler.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Response.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Http.h">
@@ -57,6 +60,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="FileHandler.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Response.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="HTTPConsts.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

@@ -1,8 +1,12 @@
 #include "Server.h"
 
+#define LISTEN_PORT 8080
+#define STATIC_FOLDER "C:/Temp/static"
+
 int main() {
 	server_t server;
 
-	initServer(&server, NULL, 8080, "C:/Temp/static");
+	printf("Server started on port %d...\nWith work folder: %s\n", LISTEN_PORT, STATIC_FOLDER);
+	initServer(&server, NULL, LISTEN_PORT, STATIC_FOLDER);
 	startServer(&server);
 }

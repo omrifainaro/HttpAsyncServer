@@ -6,7 +6,8 @@
 
 #define BUFF_SIZE (256)
 #define BUFF_EXTRA (100)
-#define GET_BUF_PTR(buf) ((buf.size <= BUFF_SIZE) ? buf.b.smallBuf : buf.b.largeBuf)
+#define IS_SMALL_BUFFER(buf) ((buf)->size <= BUFF_SIZE) 
+#define GET_BUF_PTR(buf) (IS_SMALL_BUFFER(buf) ? (buf)->b.smallBuf : (buf)->b.largeBuf)
 
 typedef struct buffer_s {
 	union{
@@ -21,3 +22,5 @@ typedef struct buffer_s {
 
 error_t initBuffer(buffer_t* buf);
 error_t writeBuffer(buffer_t* buf, BYTE* data, SIZE_T dataLen);
+
+void cleanupBuffer(buffer_t* buffer);

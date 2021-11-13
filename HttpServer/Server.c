@@ -14,7 +14,7 @@ error_t initServer(server_t* server, PCHAR ip, USHORT port, char* rootPath) {
 	server->acceptSocket = INVALID_SOCKET;
 	server->ip = _strdup(ip);
 	server->port = port;
-	memset(server->socketArray, 0, sizeof(server->socketArray));
+	memset(server->clients, 0, sizeof(server->clients));
 
 	iResult = WSAStartup(MAKEWORD(2, 2), &wsaData);
 	if (iResult != 0) {
@@ -44,8 +44,8 @@ static error_t findFirstClient(server_t* server, client_t** outClient) {
 	int i = 0;
 
 	for (i = 0; i < FD_SETSIZE; i++) {
-		if (!server->socketArray[i].alive) {
-			*outClient = &server->socketArray[i];
+		if (!server->clients[i].alive) {
+			*outClient = &server->clients[i];
 			return ERROR_OK;
 		}
 	}
@@ -82,7 +82,7 @@ static error_t recvFromClientSocket(client_t* client) {
 		goto cleanup;
 	}
 
-	err = writeBuffer(&client->buffer, data, iResult);
+	err = writeBuffer(client->buffer, data, iResult);
 
 cleanup:
 	if (data)
@@ -96,18 +96,18 @@ static error_t checkFullData(client_t* client) {
 	BYTE* buffer = GET_BUF_PTR(client->buffer);
 	BYTE* value = NULL;
 
-	ptr = memnmem(buffer, client->buffer.size, HTTP_BODY_DELIM, sizeof(HTTP_BODY_DELIM) - 1);
+	ptr = memnmem(buffer, client->buffer->size, HTTP_BODY_DELIM, sizeof(HTTP_BODY_DELIM) - 1);
 	if (!ptr) {
 		return ERROR_MORE_READ;
 	}
 
-	err = getHeaderValue(buffer, client->buffer.size, "Content-Length", &value);
+	err = getHeaderValue(buffer, client->buffer->size, "Content-Length", &value);
 	if (err == ERROR_NO_FOUND) {
 		return ERROR_OK;
 	}
 
 	// If data up until \r\n\r\n
-	if (client->buffer.size - ((ptr + (sizeof(HTTP_BODY_DELIM) - 1)) - buffer) >= atoi(value)) {
+	if (client->buffer->size - ((ptr + (sizeof(HTTP_BODY_DELIM) - 1)) - buffer) >= atoi(value)) {
 		return ERROR_OK;
 	}
 		
@@ -116,32 +116,28 @@ static error_t checkFullData(client_t* client) {
 
 static error_t handleRequest(client_t* client, HTTP_REQUEST_PACKET* request) {
 	error_t err = ERROR_UNINIT;
-	BYTE* fileContent = NULL;
-	char contentLength[10];
-	char* response = NULL;
-	EXIT_CODE code = SUCCESS;
 	SIZE_T fileSize = 0;
-	HEADER h1 = { "Connection", "Keep-Alive" };
-	HEADER h2 = { "Keep-Alive", "timeout=5, max=999" };
-	HEADER h3 = { "Content-Length", "9" };
-	HEADER* headers[] = { &h1, &h2, &h3 };
-	HTTP_RESPONSE_PACKET packet = { "HTTP/1.1", "200", "OK", headers, NULL, sizeof(headers) / sizeof(HEADER*) };
+	BYTE* fileContent = NULL;
+	http_response_t response = { 0 };
+	char* responseData = NULL;
+	SIZE_T responseLen = 0;
+
 	char* path = request->request_target_path;
-
-	if (!getFileContent(path, &fileContent, &fileSize)) {
-		return ERROR_NO_FOUND;
-	}
-
-	snprintf(contentLength, 10, "%d", fileSize);
-	h3.value = contentLength;
-	packet.body = fileContent;
-
-	code = create_http_response_packet(&packet, &response);
-	if (code == SUCCESS) {
-		send(client->sock, response, strlen(response), 0);
-	}
+	if (!path)
+		return ERROR_OK;
 	
-	return ERROR_OK;
+	if (!getFileContent(path, &fileContent, &fileSize)) {
+		buildResponse(&response, NOT_FOUND, NULL, NULL, 0);
+	}
+	else {
+		buildResponse(&response, OK, "text/html", fileContent, fileSize);
+	}
+
+	err = responseToString(&response, &responseData, &responseLen);
+	if (IS_SUCCESS(err))
+		send(client->sock, responseData, responseLen, 0);
+	
+	return err;
 }
 
 /// <summary>
@@ -161,7 +157,7 @@ static error_t handleClient(client_t* client) {
 
 	err = checkFullData(client);
 	if (IS_SUCCESS(err)) {
-		exitCode = parse_http_request_packet(buffer, client->buffer.size, &request);
+		exitCode = parse_http_request_packet(buffer, client->buffer->size, &request);
 		err = handleRequest(client, request);
 	}
 	return err;
@@ -173,16 +169,18 @@ static error_t serverLoop(server_t* server) {
 	int iResult = 0;
 	fd_set readfds = { 0 };
 	struct timeval tv = { 100, 0 };
+	SOCKET cSocket = INVALID_SOCKET;
+	struct sockaddr_in addr = { 0 };
 	client_t* currentClient = NULL;
-	client_t* clientOp = NULL;
 
 	while (1) {
 		FD_ZERO(&readfds);
 		FD_SET(server->acceptSocket, &readfds);
 
+		// Init readfds according to the connected clients array
 		for (i = 0; i < FD_SETSIZE; i++) {
-			if (server->socketArray[i].alive)
-				FD_SET(server->socketArray[i].sock, &readfds);
+			if (server->clients[i].alive)
+				FD_SET(server->clients[i].sock, &readfds);
 		}
 		
 		iResult = select(0, &readfds, NULL, NULL, &tv);
@@ -195,27 +193,32 @@ static error_t serverLoop(server_t* server) {
 		if (FD_ISSET(server->acceptSocket, &readfds)) {
 			err = findFirstClient(server, &currentClient);
 			if (IS_SUCCESS(err)) {
-				currentClient->sock = accept(server->acceptSocket, &currentClient->addr, NULL);
-				if (currentClient->sock == INVALID_SOCKET) {
-					exit(0);
+				cSocket = accept(server->acceptSocket, &addr, NULL);
+				err = initClient(currentClient, cSocket, addr);
+				if (!IS_SUCCESS(err)) {
+					printf("Client failed to connect with error: %d\n");
+					cleanupClient(currentClient);
 				}
-				initBuffer(&currentClient->buffer);
-				currentClient->alive = 1;
-				printf("New client connected!\n");
+				else {
+					printf("New client connected!\n");
+				}
+			}
+			else {
+				printf("No more room for new clients (max clients:%d)!\n", FD_SETSIZE);
 			}
 		}
 
+		// Handle eventws on new client data
 		for (i = 0; i < FD_SETSIZE; i++) {
-			clientOp = &server->socketArray[i];
-			if (clientOp->alive) {
-				if (FD_ISSET(clientOp->sock, &readfds)) {
-					err = handleClient(clientOp);
+			currentClient = &server->clients[i];
+			if (currentClient->alive) {
+				if (FD_ISSET(currentClient->sock, &readfds)) {
+					err = handleClient(currentClient);
 					if (!IS_SUCCESS(err)) {
-						closesocket(clientOp->sock);
-						clientOp->alive = 0;
+						cleanupClient(currentClient);
 					}
 				}
-				FD_CLR(clientOp->sock, &readfds);
+				FD_CLR(currentClient->sock, &readfds);
 			}
 		}
 	}
@@ -275,5 +278,28 @@ void cleanupServer(server_t* server) {
 		if (server->ip)
 			free(server->ip);
 		WSACleanup();
+	}
+}
+
+error_t initClient(client_t* client, SOCKET sock, struct sockaddr_in addr) {
+	if (sock == INVALID_SOCKET) {
+		return ERROR_SOCKET;
+	}
+	client->sock = sock;
+	client->buffer = malloc(sizeof(buffer_t));
+	initBuffer(client->buffer);
+	client->alive = 1;
+	memcpy(&client->addr, &addr, sizeof(struct sockaddr));
+	return ERROR_OK;
+}
+
+void cleanupClient(client_t* client) {
+	if (client) { 
+		client->alive = 0;
+		cleanupBuffer(client->buffer);
+		free(client->buffer);
+		if (client->sock != INVALID_SOCKET)
+			closesocket(client->sock);
+		memset(client, 0, sizeof(client_t));
 	}
 }

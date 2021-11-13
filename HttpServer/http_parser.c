@@ -14,14 +14,14 @@ EXIT_CODE parse_http_request_packet(char* request, int request_size, HTTP_REQUES
 	if (!body)
 	{
 		printf("No \\r\\n\\r\\n in end of packet!\n");
-		return BAD_REQUEST; // INVALID_REQUEST
+		return KAK_REQUEST; // INVALID_REQUEST
 	}
 
 	token = strtok(request, HTTP_PARSE_DELIM); // first line of HTTP.
 	if (parse_request_line(token, *http_packet) == FAILED) // parse request line.
 	{
 		printf("Failed to parse request line\n");
-		return BAD_REQUEST;
+		return KAK_REQUEST;
 	}
 
 	token = strtok(NULL, HTTP_PARSE_DELIM);
@@ -32,7 +32,7 @@ EXIT_CODE parse_http_request_packet(char* request, int request_size, HTTP_REQUES
 		if (parse_header_line(token, *http_packet, (*http_packet)->headers_count)) // headers value can be more than one value.
 		{
 			printf("Failed to parse header line!\n");
-			return BAD_REQUEST;
+			return KAK_REQUEST;
 		}
 		if (strncmp((*http_packet)->headers[(*http_packet)->headers_count - 1]->name, BODY_LEN_HEADER, strlen(BODY_LEN_HEADER)) == 0)
 			body_size = atoi((*http_packet)->headers[(*http_packet)->headers_count - 1]->value) + 1; // Content-Length
@@ -45,7 +45,7 @@ EXIT_CODE parse_http_request_packet(char* request, int request_size, HTTP_REQUES
 		if (copy_to_heap(&(*http_packet)->body, token, body_size) != SUCCESS)
 		{
 			printf("Invalid body headers!\n");
-			return BAD_REQUEST;
+			return KAK_REQUEST;
 		}
 	}
 
@@ -60,32 +60,32 @@ EXIT_CODE parse_request_line(char* request_line, HTTP_REQUEST_PACKET* http_packe
 
 	ptr = strchr(request_line, REQUEST_LINE_DELIM);
 	if (!ptr)
-		return BAD_REQUEST;
+		return KAK_REQUEST;
 
 	method_len = ptr - request_line;
 	if (method_len > MAX_METHOD_LEN)
-		return BAD_REQUEST;
+		return KAK_REQUEST;
 
 	// copy method type
 	if (copy_to_heap(&http_packet->method, request_line, method_len + 1) != SUCCESS)
 	{
 		printf("Must give valid method type!\n");
-		return BAD_REQUEST;
+		return KAK_REQUEST;
 	}
 
 	ptr++;
 	prev_ptr = ptr;
 	ptr = strchr(ptr, REQUEST_LINE_DELIM);
 	if (!ptr)
-		return BAD_REQUEST;
+		return KAK_REQUEST;
 
 	if (ptr - prev_ptr > MAX_PATH)
-		return BAD_REQUEST;
+		return KAK_REQUEST;
 	// copy the request target - path
 	if (copy_to_heap(&http_packet->request_target_path, prev_ptr, ptr - prev_ptr + 1) != SUCCESS)
 	{
 		printf("Must give valid path!\n");
-		return BAD_REQUEST;
+		return KAK_REQUEST;
 	}
 
 	ptr++;
@@ -95,7 +95,7 @@ EXIT_CODE parse_request_line(char* request_line, HTTP_REQUEST_PACKET* http_packe
 	if (copy_to_heap(&http_packet->protocol_version, ptr, request_line + strnlen(request_line, MAX_HEADER_LEN) - ptr + 1) != SUCCESS)
 	{
 		printf("Must give valid protocol version!\n");
-		return BAD_REQUEST;
+		return KAK_REQUEST;
 	}
 
 	return SUCCESS;
@@ -112,7 +112,7 @@ EXIT_CODE parse_header_line(char* header_line, HTTP_REQUEST_PACKET* http_packet,
 
 	ptr = strstr(header_line, HEADER_DELIM);
 	if (!ptr)
-		return BAD_REQUEST;
+		return KAK_REQUEST;
 
 	http_packet->headers[headers_count - 1] = (HEADER*)malloc(sizeof(HEADER));
 	if (!http_packet->headers[headers_count - 1]) return FAILED;
@@ -123,13 +123,13 @@ EXIT_CODE parse_header_line(char* header_line, HTTP_REQUEST_PACKET* http_packet,
 	if (copy_to_heap(&http_packet->headers[headers_count - 1]->name, header_line, name_size) != SUCCESS) // with null byte.
 	{
 		printf("Invalid header name!\n");
-		return BAD_REQUEST;
+		return KAK_REQUEST;
 	}
 	// copy header value
 	if (copy_to_heap(&http_packet->headers[headers_count - 1]->value, ptr + 2, strnlen(header_line, MAX_HEADER_LEN) - name_size) != SUCCESS) // with null byte. + 2 to not include ": "
 	{
 		printf("Invalid header value!\n");
-		return BAD_REQUEST;
+		return KAK_REQUEST;
 	}
 	return SUCCESS;
 }
@@ -187,7 +187,7 @@ EXIT_CODE create_http_response_packet(HTTP_RESPONSE_PACKET* http_packet, char** 
 		if (body_size <= 0)
 		{
 			printf("Invalid body headers!\n");
-			return BAD_REQUEST;
+			return KAK_REQUEST;
 		}
 		strncat(*response, http_packet->body, body_size);
 	}
