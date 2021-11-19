@@ -8,15 +8,9 @@ typedef enum error_e {
 	ERROR_SOCKET,
 	ERROR_NO_FOUND,
 	ERROR_BUFFER,
-	ERROR_MORE_READ
+	ERROR_MORE_READ,
+	ERROR_NOT_ENOUGH_DATA,
+	ERROR_INVALID_REQUEST
 } error_t;
-
-// For ronf's library
-typedef enum _EXIT_CODE
-{
-	SUCCESS,
-	FAILED,
-	KAK_REQUEST
-} EXIT_CODE;
 
 #define IS_SUCCESS(err) (err == ERROR_OK) 

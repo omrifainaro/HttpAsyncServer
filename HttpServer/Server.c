@@ -114,7 +114,7 @@ static error_t checkFullData(client_t* client) {
 	return ERROR_MORE_READ;
 }
 
-static error_t handleRequest(client_t* client, HTTP_REQUEST_PACKET* request) {
+static error_t handleRequest(client_t* client, http_request_t* request) {
 	error_t err = ERROR_UNINIT;
 	SIZE_T fileSize = 0;
 	BYTE* fileContent = NULL;
@@ -122,7 +122,10 @@ static error_t handleRequest(client_t* client, HTTP_REQUEST_PACKET* request) {
 	char* responseData = NULL;
 	SIZE_T responseLen = 0;
 
-	char* path = request->request_target_path;
+	char* path = request->path;
+	if (!strcmp(path, "/"))
+		path = "/index.html";
+
 	if (!path)
 		return ERROR_OK;
 	
@@ -146,20 +149,29 @@ static error_t handleRequest(client_t* client, HTTP_REQUEST_PACKET* request) {
 /// <param name="client">contains a socket and a buffer to read data to</param>
 /// <returns>error code</returns>
 static error_t handleClient(client_t* client) {
-	HTTP_REQUEST_PACKET* request = NULL;
-	EXIT_CODE exitCode = SUCCESS;
+	http_request_t request = { 0 };
+
 	error_t err = recvFromClientSocket(client);
-	char* buffer = (char*) GET_BUF_PTR(client->buffer);
 
 	if (!IS_SUCCESS(err)) {
 		return err;
 	}
 
 	err = checkFullData(client);
-	if (IS_SUCCESS(err)) {
-		exitCode = parse_http_request_packet(buffer, client->buffer->size, &request);
-		err = handleRequest(client, request);
+	if (!IS_SUCCESS(err)) {
+		return err;
 	}
+
+	err = parseHttpRequest(&request, client->buffer);
+	if (!IS_SUCCESS(err)) {
+		return err;
+	}
+
+	err = handleRequest(client, &request);
+	if (!IS_SUCCESS(err)) {
+		return err;
+	}
+
 	return err;
 }
 

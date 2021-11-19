@@ -30,13 +30,13 @@
     <ClCompile Include="Utils.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="http_parser.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="FileHandler.c">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Response.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="HttpParser.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -56,16 +56,16 @@
     <ClInclude Include="Utils.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="http_parser.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="FileHandler.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Response.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="HTTPConsts.h">
+    <ClInclude Include="HttpConsts.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="HttpParser.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

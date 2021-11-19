@@ -1,6 +1,6 @@
 #include "Http.h"
 
-static int parseHeader(BYTE* buffer, SIZE_T buffSize, header_t* out) {
+int parseHeader(BYTE* buffer, SIZE_T buffSize, header_t* out) {
 	BYTE* ptr = buffer;
 	int found = 0;
 
@@ -17,7 +17,8 @@ static int parseHeader(BYTE* buffer, SIZE_T buffSize, header_t* out) {
 	found = 0;
 	out->keySize = ptr - buffer;
 
-	if (ptr >= buffer + buffSize)
+	ptr++;
+	if (ptr > buffer + buffSize)
 		return 0;
 
 	out->value = ptr + 1;
@@ -30,7 +31,7 @@ static int parseHeader(BYTE* buffer, SIZE_T buffSize, header_t* out) {
 	}
 	if (!found)
 		return 0;
-	out->valueSize = ptr - buffer + out->keySize + 1;
+	out->valueSize = ptr - (buffer + out->keySize + 1);
 	return 1;
 }
 

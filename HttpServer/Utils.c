@@ -14,12 +14,9 @@ BYTE* memnmem(BYTE* buffer, SIZE_T bufLen, BYTE* search, SIZE_T searchLen) {
 	return NULL;
 }
 
-EXIT_CODE copy_to_heap(char** dest, char* src, int dest_size)
-{
-	if (dest_size <= 0) return KAK_REQUEST;
-	*dest = (char*)malloc(dest_size);
-	if (!*dest) return FAILED;
-	strncpy(*dest, src, dest_size);
-	(*dest)[dest_size - 1] = '\0';
-	return SUCCESS;
+char* myStrndup(BYTE* data, SIZE_T dataLen) {
+	char* ptr = malloc(dataLen + 1);
+	memcpy(ptr, data, dataLen);
+	ptr[dataLen] = 0;
+	return ptr;
 }

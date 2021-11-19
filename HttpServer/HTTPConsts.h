@@ -14,6 +14,7 @@
 #define DATETIME_LEN 30
 
 #define CRLF "\r\n"
+#define CRLFCRLF "\r\n\r\n"
 #define HEADER_DELIM ": "
 
 typedef enum http_response_code_e {

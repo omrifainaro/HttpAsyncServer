@@ -13,4 +13,6 @@ typedef struct header_s {
 	SIZE_T valueSize;
 } header_t;
 
+int parseHeader(BYTE* buffer, SIZE_T buffSize, header_t* out);
+
 error_t getHeaderValue(BYTE* buffer, SIZE_T size, PCHAR header, PCHAR** outValue);

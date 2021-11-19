@@ -142,7 +142,7 @@
     <ClCompile Include="Buffer.c" />
     <ClCompile Include="FileHandler.c" />
     <ClCompile Include="Http.c" />
-    <ClCompile Include="http_parser.c" />
+    <ClCompile Include="HttpParser.c" />
     <ClCompile Include="Main.c" />
     <ClCompile Include="Response.c" />
     <ClCompile Include="Server.c" />
@@ -153,8 +153,8 @@
     <ClInclude Include="Error.h" />
     <ClInclude Include="FileHandler.h" />
     <ClInclude Include="Http.h" />
-    <ClInclude Include="HTTPConsts.h" />
-    <ClInclude Include="http_parser.h" />
+    <ClInclude Include="HttpConsts.h" />
+    <ClInclude Include="HttpParser.h" />
     <ClInclude Include="Response.h" />
     <ClInclude Include="Server.h" />
     <ClInclude Include="Utils.h" />

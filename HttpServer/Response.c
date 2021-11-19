@@ -52,3 +52,12 @@ error_t responseToString(http_response_t* response, char** outData, SIZE_T* outD
 	cleanupBuffer(&buffer);
 	return ERROR_OK;
 }
+
+void cleanupResponse(http_response_t* response) {
+	if (response) {
+		free(response->reponseLine);
+		cleanupBuffer(&response->headers);
+		free(response->body);
+		memset(response, 0, sizeof(http_response_t));
+	}
+}

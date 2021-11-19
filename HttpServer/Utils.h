@@ -5,4 +5,4 @@
 #include "Error.h"
 
 BYTE* memnmem(BYTE* buffer, SIZE_T bufLen, BYTE* search, SIZE_T searchLen);
-EXIT_CODE copy_to_heap(char** dest, char* src, int dest_size);
+char* myStrndup(BYTE* data, SIZE_T dataLen);
