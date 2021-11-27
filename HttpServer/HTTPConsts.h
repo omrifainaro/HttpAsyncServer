@@ -39,7 +39,7 @@ inline char* replace_(const char* s) {
 
 inline char* getResponseLine(http_response_code_t code) {
 	char buffer[128] = { 0 };
-	char* s = replace_(GET_ERROR(code));
+	char* s = replace_(GET_ERROR(code)); // TODO: Remove this piece of shit
 	snprintf(buffer, sizeof(buffer), "HTTP/1.1 %d %s\r\n", code, s);
 	free(s);
 	return _strdup(buffer);

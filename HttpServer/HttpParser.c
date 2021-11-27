@@ -36,8 +36,8 @@ static error_t parseRequestLine(http_request_t* request, char* data, SIZE_T data
 		return ERROR_INVALID_REQUEST;
 
 	request->method = getMethod(data, ptr - data);
-	if (request->method == M_INVALID)
-		return ERROR_INVALID_REQUEST;
+	/*if (request->method == M_INVALID)
+		return ERROR_INVALID_REQUEST;*/
 
 	data = ptr + 1;
 	dataLen -= ptr - data + 1;
@@ -54,11 +54,21 @@ static error_t parseRequestLine(http_request_t* request, char* data, SIZE_T data
 	return ERROR_OK;
 }
 
+static void handleSpecialHeaders(http_request_t* request, header_t* header) {
+	if (header->keySize != sizeof(CONTENT_LENGTH) - 1 &&
+		!strnicmp(header->key, CONTENT_LENGTH, header->keySize))
+		request->contentLength = atoi(header->value);
+	else if (header->keySize != sizeof(CONTENT_TYPE) - 1 &&
+		!strnicmp(header->key, CONTENT_TYPE, header->keySize))
+		request->contentType = myStrndup(header->value, header->valueSize);
+}
+
 static error_t parseHeaders(http_request_t* request, buffer_t* buffer) {
 	error_t err = ERROR_UNINIT;
 	BYTE* curHeader = NULL;
 	BYTE* headerCopy = NULL;
 	SIZE_T curHeaderSize = 0;
+	header_t* headerPtr = NULL;
 	int val = 0;
 	request->curHeader = 0;
 
@@ -67,7 +77,17 @@ static error_t parseHeaders(http_request_t* request, buffer_t* buffer) {
 		if (!IS_SUCCESS(err))
 			goto cleanup;
 		headerCopy = myStrndup(curHeader, curHeaderSize);
-		val = parseHeader(headerCopy, curHeaderSize, &request->headers[request->curHeader]);
+
+		// TODO: Maybe make this a bit more efficient
+		free(curHeader);
+		curHeader = NULL;
+
+		// TODO: security check: check that headerCopy length is the same as the length we read from the buffer, otherwise return bad request
+		headerPtr = &request->headers[request->curHeader];
+		// The header key will point to the begging of the strnduped value
+		val = parseHeader(headerCopy, curHeaderSize, headerPtr);
+		handleSpecialHeaders(request, headerPtr);
+
 		if (!val) {
 			err = ERROR_INVALID_REQUEST;
 			goto cleanup;
@@ -107,10 +127,38 @@ error_t parseHttpRequest(http_request_t* request, buffer_t* buffer) {
 	if (!IS_SUCCESS(err))
 		goto cleanup;
 
-
+	if (request->contentLength != 0) {
+		request->body = malloc(request->contentLength);
+		err = readBuffer(buffer, request->body, request->contentLength); // Supposed to succeed
+	}
 
 cleanup:
+	if (!IS_SUCCESS(err))
+		cleanupRequest(request);
 	if (requestLine)
 		free(requestLine);
+
 	return err;
+}
+
+void cleanupRequest(http_request_t* request) {
+	int i = 0;
+
+	if (!request)
+		return;
+
+	if (request->body)
+		free(request->body);
+
+	if (request->path)
+		free(request->path);
+
+	if (request->contentType)
+		free(request->contentType);
+
+	for (i = 0; i < request->headersCount; i++) {
+		free(request->headers[i].key);
+	}
+
+	memset(request, 0, sizeof(*request));
 }

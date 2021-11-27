@@ -11,10 +11,8 @@
 #include "Error.h"
 #include "Buffer.h"
 #include "Utils.h"
-#include "Http.h"
 #include "FileHandler.h"
-#include "HttpParser.h"
-#include "Response.h"
+#include "HttpApplication.h"
 
 #pragma comment(lib, "Ws2_32.lib")
 

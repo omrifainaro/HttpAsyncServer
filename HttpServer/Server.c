@@ -116,27 +116,10 @@ static error_t checkFullData(client_t* client) {
 
 static error_t handleRequest(client_t* client, http_request_t* request) {
 	error_t err = ERROR_UNINIT;
-	SIZE_T fileSize = 0;
-	BYTE* fileContent = NULL;
-	http_response_t response = { 0 };
 	char* responseData = NULL;
 	SIZE_T responseLen = 0;
 
-	char* path = request->path;
-	if (!strcmp(path, "/"))
-		path = "/index.html";
-
-	if (!path)
-		return ERROR_OK;
-	
-	if (!getFileContent(path, &fileContent, &fileSize)) {
-		buildResponse(&response, NOT_FOUND, NULL, NULL, 0);
-	}
-	else {
-		buildResponse(&response, OK, "text/html", fileContent, fileSize);
-	}
-
-	err = responseToString(&response, &responseData, &responseLen);
+	err = handleHTTPRequest(request, &responseData, &responseLen);
 	if (IS_SUCCESS(err))
 		send(client->sock, responseData, responseLen, 0);
 	
@@ -171,6 +154,10 @@ static error_t handleClient(client_t* client) {
 	if (!IS_SUCCESS(err)) {
 		return err;
 	}
+
+	cleanupRequest(&request);
+	cleanupBuffer(client->buffer);
+	initBuffer(client->buffer);
 
 	return err;
 }
