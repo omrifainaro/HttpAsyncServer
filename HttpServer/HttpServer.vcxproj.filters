@@ -13,6 +13,9 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="External Libs">
+      <UniqueIdentifier>{d86db75e-2b78-4a9c-9113-7565fec4a39f}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Main.c">
@@ -41,6 +44,12 @@
     </ClCompile>
     <ClCompile Include="HttpApplication.c">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Routing.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="re.c">
+      <Filter>External Libs</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -73,6 +82,18 @@
     </ClInclude>
     <ClInclude Include="HttpApplication.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Routing.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Structs.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Consts.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="re.h">
+      <Filter>External Libs</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

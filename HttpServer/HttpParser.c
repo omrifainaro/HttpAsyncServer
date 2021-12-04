@@ -36,8 +36,6 @@ static error_t parseRequestLine(http_request_t* request, char* data, SIZE_T data
 		return ERROR_INVALID_REQUEST;
 
 	request->method = getMethod(data, ptr - data);
-	/*if (request->method == M_INVALID)
-		return ERROR_INVALID_REQUEST;*/
 
 	data = ptr + 1;
 	dataLen -= ptr - data + 1;
@@ -73,19 +71,13 @@ static error_t parseHeaders(http_request_t* request, buffer_t* buffer) {
 	request->curHeader = 0;
 
 	do {
+		// curHeader is a newly allocated buffer
 		err = readBufferUntil(buffer, CRLF, sizeof(CRLF) - 1, &curHeader, &curHeaderSize);
 		if (!IS_SUCCESS(err))
 			goto cleanup;
-		headerCopy = myStrndup(curHeader, curHeaderSize);
 
-		// TODO: Maybe make this a bit more efficient
-		free(curHeader);
-		curHeader = NULL;
-
-		// TODO: security check: check that headerCopy length is the same as the length we read from the buffer, otherwise return bad request
 		headerPtr = &request->headers[request->curHeader];
-		// The header key will point to the begging of the strnduped value
-		val = parseHeader(headerCopy, curHeaderSize, headerPtr);
+		val = parseHeader(curHeader, curHeaderSize, headerPtr);
 		handleSpecialHeaders(request, headerPtr);
 
 		if (!val) {
@@ -101,9 +93,6 @@ static error_t parseHeaders(http_request_t* request, buffer_t* buffer) {
 	} while (memcmp(buffer->readPtr, CRLF, sizeof(CRLF) - 1));
 
 cleanup:
-	if (curHeader) {
-		free(curHeader);
-	}
 	return err;
 }
 

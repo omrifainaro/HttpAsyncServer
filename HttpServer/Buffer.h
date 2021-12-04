@@ -1,26 +1,7 @@
 #pragma once
 
-#include <Windows.h>
-
 #include "Utils.h"
-#include "Error.h"
-
-#define BUFF_SIZE (256)
-#define BUFF_EXTRA (100)
-#define IS_SMALL_BUFFER(buf) ((buf)->size <= BUFF_SIZE) 
-#define GET_BUF_PTR(buf) (IS_SMALL_BUFFER(buf) ? (buf)->b.smallBuf : (buf)->b.largeBuf)
-#define GET_READ_SIZE(buf) ((buf)->end - (buf)->readPtr)
-
-typedef struct buffer_s {
-	union{
-		BYTE smallBuf[BUFF_SIZE];
-		BYTE* largeBuf;
-	} b;
-	BYTE* end;
-	BYTE* readPtr;
-	SIZE_T size;
-	SIZE_T capacity;
-} buffer_t;
+#include "Structs.h"
 
 
 error_t initBuffer(buffer_t* buf);

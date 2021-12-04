@@ -1,8 +1,7 @@
 #pragma once
 
 #include "Error.h"
-#include "HttpParser.h"
-#include "Response.h"
-#include "FileHandler.h"
+#include "Structs.h"
+#include "Routing.h"
 
 error_t handleHTTPRequest(http_request_t* request, char** out, SIZE_T* outLen);

@@ -8,40 +8,32 @@
 #include <string.h>
 #include <time.h>
 
-#define GET_ERROR(err) #err
+#include "Structs.h"
 
-#define DATETIME_FORMAT "%a, %d %b %Y %T GMT"
-#define DATETIME_LEN 30
-
-#define CRLF "\r\n"
-#define CRLFCRLF "\r\n\r\n"
-#define HEADER_DELIM ": "
-
-typedef enum http_response_code_e {
-	OK = 200,
-	MOVED_PERMANENTLY = 301,
-	BAD_REQUEST = 400,
-	UNAUTHORIZED = 401,
-	FORBIDDEN = 403,
-	NOT_FOUND = 404,
-	INTERNAL_SERVER_ERROR = 500
-} http_response_code_t;
-
-inline char* replace_(const char* s) {
-	char* s2 = _strdup(s);
-	char* current_pos = strchr(s2, '_');
-	while (current_pos) {
-		*current_pos = ' ';
-		current_pos = strchr(current_pos, '_');
+inline char* errorCodeToString(http_response_code_t code) {
+	switch (code) {
+	case OK:
+		return "OK";
+	case MOVED_PERMANENTLY:
+		return "MOVED PERMANENTLY";
+	case BAD_REQUEST:
+		return "BAD REQUEST";
+	case UNAUTHORIZED:
+		return "UNAUTHORIZED";
+	case FORBIDDEN:
+		return "FORBIDDEN";
+	case NOT_FOUND:
+		return "NOT FOUND";
+	case INTERNAL_SERVER_ERROR:
+		return "INTERNAL SERVER ERROR";
 	}
-	return s2;
+
+	return "UNKNOWN";
 }
 
 inline char* getResponseLine(http_response_code_t code) {
 	char buffer[128] = { 0 };
-	char* s = replace_(GET_ERROR(code)); // TODO: Remove this piece of shit
-	snprintf(buffer, sizeof(buffer), "HTTP/1.1 %d %s\r\n", code, s);
-	free(s);
+	snprintf(buffer, sizeof(buffer), "HTTP/1.1 %d %s\r\n", code, errorCodeToString(code));
 	return _strdup(buffer);
 }
 

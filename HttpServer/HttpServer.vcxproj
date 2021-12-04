@@ -145,20 +145,26 @@
     <ClCompile Include="HttpApplication.c" />
     <ClCompile Include="HttpParser.c" />
     <ClCompile Include="Main.c" />
+    <ClCompile Include="re.c" />
     <ClCompile Include="Response.c" />
+    <ClCompile Include="Routing.c" />
     <ClCompile Include="Server.c" />
     <ClCompile Include="Utils.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Buffer.h" />
+    <ClInclude Include="Consts.h" />
     <ClInclude Include="Error.h" />
     <ClInclude Include="FileHandler.h" />
     <ClInclude Include="Http.h" />
     <ClInclude Include="HttpApplication.h" />
     <ClInclude Include="HttpConsts.h" />
     <ClInclude Include="HttpParser.h" />
+    <ClInclude Include="re.h" />
     <ClInclude Include="Response.h" />
+    <ClInclude Include="Routing.h" />
     <ClInclude Include="Server.h" />
+    <ClInclude Include="Structs.h" />
     <ClInclude Include="Utils.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

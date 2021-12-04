@@ -1,15 +1,8 @@
 #pragma once
 
-#include "HTTPConsts.h"
 #include "Buffer.h"
-#include "Error.h"
-
-typedef struct http_response_s {
-	char* reponseLine;
-	buffer_t headers;
-	BYTE* body;
-	SIZE_T bodySize;
-} http_response_t;
+#include "HTTPConsts.h"
+#include "Structs.h"
 
 /// <summary>
 /// This function initializes the fields of the given response according
