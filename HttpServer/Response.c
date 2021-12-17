@@ -23,10 +23,11 @@ static void addDefaultHeaders(http_response_t* response, SIZE_T contentLength, c
 	free(date);
 }
 
-void buildResponse(http_response_t* response, http_response_code_t code, char* contentType, BYTE* body, SIZE_T bodyLength) {
+void buildResponse(http_response_t* response, http_response_code_t code, char* contentType, BYTE* body, SIZE_T bodyLength, int includeDefaultHeaders) {
 	response->reponseLine = getResponseLine(code);
 	initBuffer(&response->headers);
-	addDefaultHeaders(response, bodyLength, contentType);
+	if(includeDefaultHeaders)
+		addDefaultHeaders(response, bodyLength, contentType);
 	response->body = body;
 	response->bodySize = bodyLength;
 }

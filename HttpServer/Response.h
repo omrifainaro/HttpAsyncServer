@@ -13,7 +13,8 @@
 /// <param name="contentType">Content type -> can be NULL</param>
 /// <param name="body">Body of response -> can be NULL</param>
 /// <param name="bodyLength">Length of body -> can be 0</param>
-void buildResponse(http_response_t* response, http_response_code_t code, char* contentType, BYTE* body, SIZE_T bodyLength);
+/// <param name="includeDefaultHeaders"> Whether to add the default headers </param>
+void buildResponse(http_response_t* response, http_response_code_t code, char* contentType, BYTE* body, SIZE_T bodyLength, int includeDefaultHeaders);
 
 /// <summary>
 /// Adds a custom header to an already built and initialized response

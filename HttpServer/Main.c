@@ -1,6 +1,6 @@
 #include "Server.h"
 
-#define LISTEN_PORT 8080
+#define LISTEN_PORT 9090
 #define STATIC_FOLDER "C:/Temp/static"
 
 int main() {

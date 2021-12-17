@@ -31,7 +31,7 @@ int parseHeader(BYTE* buffer, SIZE_T buffSize, header_t* out) {
 	}
 	if (!found)
 		return 0;
-	out->valueSize = ptr - (buffer + out->keySize + 1);
+	out->valueSize = ptr - (buffer + out->keySize + 1) - 1;
 	return 1;
 }
 

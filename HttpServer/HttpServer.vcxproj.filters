@@ -51,6 +51,9 @@
     <ClCompile Include="re.c">
       <Filter>External Libs</Filter>
     </ClCompile>
+    <ClCompile Include="Authentication.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Http.h">
@@ -94,6 +97,9 @@
     </ClInclude>
     <ClInclude Include="re.h">
       <Filter>External Libs</Filter>
+    </ClInclude>
+    <ClInclude Include="Authentication.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

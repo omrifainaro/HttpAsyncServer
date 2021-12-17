@@ -2,6 +2,7 @@
 
 http_route_t routes[] = {
 	{"/hello/.*", M_GET, sayHello },
+	{"/admin/.*", M_GET, adminApi },
 	{"/.*", 0xff, defaultHandler}, // Default route
 };
 
@@ -27,9 +28,25 @@ error_t sayHello(http_request_t* request, char** out, SIZE_T* outLen) {
 	http_response_t response = { 0 };
 	error_t err = ERROR_UNINIT;
 
-	buildResponse(&response, OK, request->contentType, "{\"hello\": 3.14}", sizeof("{\"hello\": 3.14}") - 1);
+	buildResponse(&response, OK, request->contentType, "{\"hello\": 3.14}", sizeof("{\"hello\": 3.14}") - 1, 1);
 	err = responseToString(&response, out, outLen);
 	return err;
+}
+
+error_t adminApi(http_request_t* request, char** out, SIZE_T* outLen) {
+	error_t err = ERROR_UNINIT;
+	http_response_t response = { 0 };
+
+	err = isAuthenticated(request);
+	if (!IS_SUCCESS(err)) {
+		printf("User unauthenticated with error %d\n", err);
+		buildResponse(&response, UNAUTHORIZED, NULL, NULL, 0, 0);
+		addHeader(&response, "WWW-Authenticate", "Basic realm=\"Access to the staging site\"");
+		err = responseToString(&response, out, outLen);
+		return err;
+	}
+
+	return sayHello(request, out, outLen);
 }
 
 error_t defaultHandler(http_request_t* request, char** out, SIZE_T* outLen) {
@@ -47,12 +64,12 @@ error_t defaultHandler(http_request_t* request, char** out, SIZE_T* outLen) {
 
 	if (!getFileContent(path, &fileContent, &fileSize)) {
 		if (!getFileContent("/404/404.html", &fileContent, &fileSize))
-			buildResponse(&response, NOT_FOUND, NULL, NULL, 0);
+			buildResponse(&response, NOT_FOUND, NULL, NULL, 0, 1);
 		else
-			buildResponse(&response, NOT_FOUND, "text/html", fileContent, fileSize);
+			buildResponse(&response, NOT_FOUND, "text/html", fileContent, fileSize, 1);
 	}
 	else {
-		buildResponse(&response, OK, request->contentType, fileContent, fileSize);
+		buildResponse(&response, OK, request->contentType, fileContent, fileSize, 1);
 	}
 
 	err = responseToString(&response, out, outLen);

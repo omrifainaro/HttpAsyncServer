@@ -3,7 +3,7 @@
 static error_t handleINVALID(http_request_t* request, char** out, SIZE_T* outLen) {
 	http_response_t response = { 0 };
 	const char* generalError = "Yo dude, this request is shit!";
-	buildResponse(&response, BAD_REQUEST, NULL, generalError, strlen(generalError));
+	buildResponse(&response, BAD_REQUEST, NULL, generalError, strlen(generalError), 1);
 	return responseToString(&response, out, outLen);
 }
 

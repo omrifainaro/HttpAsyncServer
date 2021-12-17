@@ -69,6 +69,7 @@ static error_t parseHeaders(http_request_t* request, buffer_t* buffer) {
 	header_t* headerPtr = NULL;
 	int val = 0;
 	request->curHeader = 0;
+	request->headersCount = 0;
 
 	do {
 		// curHeader is a newly allocated buffer
@@ -90,6 +91,7 @@ static error_t parseHeaders(http_request_t* request, buffer_t* buffer) {
 			err = ERROR_INVALID_REQUEST;
 			goto cleanup;
 		}
+		request->headersCount++;
 	} while (memcmp(buffer->readPtr, CRLF, sizeof(CRLF) - 1));
 
 cleanup:
@@ -128,6 +130,28 @@ cleanup:
 		free(requestLine);
 
 	return err;
+}
+
+error_t findHeader(http_request_t* request, char* headerKey, __out int* index) {
+	int i = 0;
+	int headerKeyLength = strlen(headerKey);
+	header_t* pheader = NULL;
+
+	*index = -1;
+
+	for (i = 0; i < request->headersCount; i++) {
+		pheader = &request->headers[i];
+		if (headerKeyLength != pheader->keySize)
+			continue;
+
+		if (!_strnicmp(pheader->key, headerKey, headerKeyLength))
+		{
+			*index = i;
+			return ERROR_OK;
+		}
+	}
+
+	return ERROR_NO_FOUND;
 }
 
 void cleanupRequest(http_request_t* request) {

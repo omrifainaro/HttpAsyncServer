@@ -207,15 +207,15 @@ static error_t serverLoop(server_t* server) {
 			}
 		}
 
-		// Handle eventws on new client data
+		// Handle events on new client data
 		for (i = 0; i < FD_SETSIZE; i++) {
 			currentClient = &server->clients[i];
 			if (currentClient->alive) {
 				if (FD_ISSET(currentClient->sock, &readfds)) {
 					err = handleClient(currentClient);
-					if (!IS_SUCCESS(err)) {
-						cleanupClient(currentClient);
-					}
+					//if (!IS_SUCCESS(err)) {
+					cleanupClient(currentClient); // After every request need to close the socket
+					//}
 				}
 				FD_CLR(currentClient->sock, &readfds);
 			}

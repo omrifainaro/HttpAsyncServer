@@ -2,8 +2,9 @@
 
 #include "re.h"
 
+#include "Response.h"
 #include "FileHandler.h"
-
+#include "Authentication.h"
 #include "Structs.h"
 
 typedef struct http_route_s {
@@ -16,3 +17,4 @@ error_t doRoute(http_request_t* request, char** out, SIZE_T* outLen);
 
 error_t defaultHandler(http_request_t* request, char** out, SIZE_T* outLen);
 error_t sayHello(http_request_t* request, char** out, SIZE_T* outLen);
+error_t adminApi(http_request_t* request, char** out, SIZE_T* outLen);

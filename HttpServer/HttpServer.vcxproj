@@ -139,6 +139,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Authentication.c" />
     <ClCompile Include="Buffer.c" />
     <ClCompile Include="FileHandler.c" />
     <ClCompile Include="Http.c" />
@@ -152,6 +153,7 @@
     <ClCompile Include="Utils.c" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Authentication.h" />
     <ClInclude Include="Buffer.h" />
     <ClInclude Include="Consts.h" />
     <ClInclude Include="Error.h" />
